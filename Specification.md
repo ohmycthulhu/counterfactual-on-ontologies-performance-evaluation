@@ -18,7 +18,6 @@
     - `modifications` - array of modifications:
       - `type` - `insert`, `delete`, `modify`
       - `property` - instance's property that has been modified
-      - `old_value` - old instance's classes, used only in `modify` type
       - `new_value` - new instance's classes, used in `insert` and `modify` types
 
 
@@ -26,20 +25,20 @@
 
 ### `Program`
 Runs the performance evaluation and calculates the results. Uses adapter to run the algorithm, and config manager to load and validate examples.
-- `run(examples_path)` - runs the whole program and returns the results in form of array of `Result` class objects
-- `load_examples()` - uses `ExamplesManager` to load examples. Raises error if there is an error in examples file. Returns list of `AlgorithmTestCases`
+- `run(examples_path)` - runs the whole program and returns the results in form of array of `ProgramResult` class objects
+- `_load_examples()` - uses `ExamplesManager` to load examples. Raises error if there is an error in examples file. Returns list of `AlgorithmTestCases`
+
+### `ProgramResult`
+Attribute class that contains following fields:
+- `example_id` - ID of the example
+- `_example` - an object of the example
+- `rank` - number of ranked counterfactual
 
 ****
 
-### `Result`
-Attribute class that contains following fields:
-- `example_id` - ID of the example
-- `example` - an object of the example
-- `rank` - number of ranked counterfactual
-
 ### `AlgorithmTestCase`
 A class that contains attributes required for running the algorithm. It's loaded and validated by `ExamplesManager`.
-- `example` - an object of the example
+- `_example` - an object of the example
 - `individual()` - generates an individual that may be added into ontology
 - `is_valid()` - checks the existence of used classes inside the 
 
@@ -47,17 +46,17 @@ A class that contains attributes required for running the algorithm. It's loaded
 ### `ExamplesManager`
 Loads and verifies the examples from the file. It also should be able to utilize ontology in order to get necessary types.
 - `load(path)` - loads a file with examples, maps them to `AlgorithmTestCase`, and verifies their consistency.
-- `get_ontology(path)` - loads or returns already loaded ontology
-- `verify_examples(examples)` - verifies examples in form of `AlgorithmTestCase`
+- `_get_ontology(path)` - loads or returns already loaded ontology
+- `_verify_examples(examples)` - verifies examples in form of `AlgorithmTestCase`
 
 ****
 
-### `AlgorithmProvider`
+### `AlgorithmAdapter`
 An abstract class that defines methods for executing an algorithm. It provides 
 - `run(example)` - where `example` is `AlgorithmTestCase`. Executes the example and returns list of `CounterfactualExplanation`.
 
-### `CEOProvider`
-Implements `AlgorithmProvider` and serves as a bridge for using CEO.
+### `CEOAdapter`
+Implements `AlgorithmAdapter` and serves as a bridge for using CEO (Counterfactual Explanations for Ontologies) algorithm.
 
 
 ### `CounterfactualExplanation`

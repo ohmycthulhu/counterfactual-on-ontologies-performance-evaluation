@@ -1,0 +1,28 @@
+{
+  "ontology": "pizza.owl",
+  "examples": [
+    {
+      "key": "vegetarian",
+      "desiredClass": "VegetarianPizza",
+      "assertions": [
+        {
+          "property": "hasTopping",
+          "value": "ChickenTopping"
+        },
+        {
+          "property": "hasBase",
+          "value": "ThinAndCrispyBase"
+        }
+      ],
+      "expectedOutcomes": {
+        "modifications": [
+          {
+            "type": "modify",
+            "property": "hasTopping",
+            "new_value": "CheeseTopping"
+          }
+        ]
+      }
+    }
+  ]
+}
