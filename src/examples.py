@@ -1,38 +1,130 @@
-class ExamplesManager:
-    def __init__(self):
-        self._ontologies = {}
-
-    # TODO: Add type hint
-    def load(self, path):
-        # TODO: Plan
-        # TODO: Implement
-        pass
-
-    # TODO: Add type hint
-    def _get_ontology(self, path):
-        # TODO: Implement loading or returning from cache
-        pass
-
-    # TODO: Add type hint
-    def _verify_examples(self, examples):
-        # TODO: Plan
-        # TODO: Implement
-        # TODO: Raise exception if any of test cases are invalid or there are collisions in test case keys
-        pass
+import json
+import owlready2 as owl
+import os.path
 
 
 class AlgorithmTestCase:
-    # TODO: Add type hint
-    def __init__(self, example):
+    def __init__(self, example: hash, ontology):
         self._example = example
-        self._individual = self._initialize_individual(example)
+        self._ontology = ontology
+        self._individual = None
 
-    # TODO: Add getters for individual
+    @property
+    def key(self):
+        return self._example['key']
 
-    def _initialize_individual(self):
-        # TODO: Implement
-        return None
+    @property
+    def ontology(self):
+        return self._ontology
 
-    def is_valid(self):
-        # TODO: Implement
-        return False
+    @property
+    def _name(self):
+        return f"'text-example-{self.key}'"
+
+    @property
+    def individual(self) -> owl.NamedIndividual:
+        if self._individual is None:
+            self._individual = self._initialize_individual()
+        return self._individual
+
+    def destroy(self):
+        if self._individual is not None:
+            owl.destroy_entity(self._individual)
+            self._individual = None
+
+    @property
+    def expected_changes(self):
+        return self._example['expectedOutcomes'] if 'expectedOutcomes' in self._example else []
+
+    def _initialize_individual(self) -> owl.NamedIndividual:
+        cls = self._get_class(self._ontology, self._example['desiredClass'])
+        individual = cls(self._name)
+
+        for assertion_info in self._example['assertions']:
+            ind_property = self._get_property(self._ontology, assertion_info['property'])
+            target = self._get_or_create_individual(self._ontology, assertion_info['value'])
+
+            if owl.FunctionalProperty in ind_property.is_a:
+                setattr(individual, ind_property.name, target)
+            else:
+                individual.__getattr__(ind_property.name).append(target)
+
+        return individual
+
+    @staticmethod
+    def _get_class(ontology, iri):
+        for cls in ontology.classes():
+            if cls.iri == iri:
+                return cls
+
+        raise Exception(f"{iri} was not found")
+
+    @staticmethod
+    def _get_property(ontology, iri):
+        for cls in ontology.properties():
+            if cls.iri == iri:
+                return cls
+
+        raise Exception(f"{iri} was not found")
+
+    @staticmethod
+    def _get_or_create_individual(ontology, is_a):
+        cls = AlgorithmTestCase._get_class(ontology, is_a)
+        instances = cls.instances()
+        return instances[0] if cls.instances() else cls(cls.name.lower)
+
+
+class ExamplesManager:
+    def __init__(self):
+        self._ontologies = {}
+        self._examples = []
+        self._loaded = False
+
+    @property
+    def examples(self) -> list[AlgorithmTestCase]:
+        if not self._loaded:
+            raise RuntimeError("Examples has not been loaded yet")
+
+        return self._examples
+
+    def load(self, path: str):
+        config = self._read_file(path)
+        ontology = self._get_ontology(path, config['ontology'])
+        self._verify_examples(config['examples'])
+        examples = self._load_examples(config['examples'], ontology)
+
+        self._examples = examples
+        self._loaded = True
+
+        return self._examples
+
+    def _read_file(self, path: str):
+        with open(path, 'r') as file:
+            data = json.load(file)
+
+        if not ('ontology' in data and 'examples' in data):
+            raise ImportError(f"{path} does not provide required fields: ontology, examples")
+
+        return data
+
+    def _get_ontology(self, file_path: str, path: str):
+        ontology_path = os.path.join(
+            os.path.dirname(file_path),
+            path
+        )
+
+        if ontology_path not in self._ontologies:
+            self._ontologies[ontology_path] = owl.get_ontology(f"file://{ontology_path}").load()
+
+        return self._ontologies[ontology_path]
+
+    def _load_examples(self, examples: list[hash], ontology):
+        return [AlgorithmTestCase(example, ontology) for example in examples]
+
+    def _verify_examples(self, examples: list[hash]):
+        keys = [example['key'] for example in examples]
+        unique_keys = set(keys)
+        duplicate_keys = [key for key in unique_keys if keys.count(key) > 1]
+
+        if duplicate_keys:
+            raise Exception(f"Duplicate keys found: {', '.join(duplicate_keys)}")

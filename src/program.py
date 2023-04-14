@@ -1,24 +1,38 @@
+from examples import ExamplesManager, AlgorithmTestCase
+from adapter import AlgorithmAdapter, CounterfactualExplanation
+
+
 class Program:
-    def __init__(self):
-        # TODO: Assign ExamplesManager and Adapter
-        pass
+    def __init__(self, algorithm: AlgorithmAdapter):
+        self._examples_manager = ExamplesManager()
+        self._algorithm = algorithm
 
-    # TODO: Add type hint
-    def run(self, examples_path):
-        # TODO: Implement
-        # TODO: Plan
-        return []
+    def run(self, examples_path: str):
+        self._load_examples(examples_path)
 
-    def load_examples(self):
-        # TODO: Implement
-        # TODO: Plan
-        return []
+        result = self._run_examples()
+
+        return result
+
+    def _load_examples(self, examples_path):
+        return self._examples_manager.load(examples_path)
+
+    def _run_examples(self):
+        return [
+            ProgramResult(example, self._algorithm.run(example))
+            for example in self._examples_manager.examples
+        ]
 
 
 class ProgramResult:
-    # TODO: Add type hint
-    def __init__(self, example, rank):
-        self._example = example
-        self._rank = rank
+    def __init__(self, test_case: AlgorithmTestCase, explanations: list[CounterfactualExplanation]):
+        self._test_case = test_case
+        self._explanations = explanations
 
-    # TODO: Add getters for example and rank
+    @property
+    def test_case(self):
+        return self._test_case
+
+    @property
+    def result(self):
+        return self._explanations

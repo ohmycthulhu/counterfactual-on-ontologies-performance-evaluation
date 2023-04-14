@@ -3,23 +3,23 @@
   "examples": [
     {
       "key": "vegetarian",
-      "desiredClass": "VegetarianPizza",
+      "desiredClass": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#VegetarianPizza",
       "assertions": [
         {
-          "property": "hasTopping",
-          "value": "ChickenTopping"
+          "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
+          "value": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#ChickenTopping"
         },
         {
-          "property": "hasBase",
-          "value": "ThinAndCrispyBase"
+          "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasBase",
+          "value": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#ThinAndCrispyBase"
         }
       ],
       "expectedOutcomes": {
         "modifications": [
           {
             "type": "modify",
-            "property": "hasTopping",
-            "new_value": "CheeseTopping"
+            "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
+            "new_value": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#CheeseTopping"
           }
         ]
       }
