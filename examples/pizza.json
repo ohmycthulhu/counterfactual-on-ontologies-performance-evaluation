@@ -7,22 +7,41 @@
       "assertions": [
         {
           "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
-          "value": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#ChickenTopping"
+          "value": [
+            "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#ChickenTopping"
+          ]
         },
         {
           "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasBase",
-          "value": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#ThinAndCrispyBase"
+          "value": [
+            "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#ThinAndCrispyBase"
+          ]
         }
       ],
-      "expectedOutcomes": {
-        "modifications": [
-          {
-            "type": "modify",
-            "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
-            "new_value": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#CheeseTopping"
-          }
-        ]
-      }
+      "expectedOutcomes": [
+        {
+          "modifications": [
+            {
+              "type": "modify",
+              "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
+              "new_value": [
+                "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#VegetableTopping"
+              ]
+            }
+          ]
+        },
+        {
+          "modifications": [
+            {
+              "type": "modify",
+              "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
+              "new_value": [
+                "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#CheeseTopping"
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

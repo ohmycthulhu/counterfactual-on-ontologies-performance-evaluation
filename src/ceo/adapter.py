@@ -1,6 +1,8 @@
 from src.adapter import AlgorithmAdapter, CounterfactualExplanation, AssertionChange
 from src.examples import AlgorithmTestCase
 from .graph_generator import generate_counterfactuals
+from typing import Union
+from functools import reduce
 
 
 class CEOAdapter(AlgorithmAdapter):
@@ -31,9 +33,11 @@ class CEOAdapter(AlgorithmAdapter):
     def _calculate_modifications(self, info):
         raw_modifications = info['modifications']
 
-        return [
-            self._map_modifications(key, raw_modifications[key]) for key in raw_modifications.keys() if key != 'unmodified'
-        ]
+        # Flatten the list into 1D
+        return reduce(lambda acc, arr: [*acc, *arr], [
+            [self._map_modification(key, change) for change in changes]
+            for key, changes in raw_modifications.items() if key != 'unmodified'
+        ])
 
     def _map_modifications(self, type, changes):
         return [
@@ -41,7 +45,7 @@ class CEOAdapter(AlgorithmAdapter):
         ]
 
     def _map_modification(self, type, change):
-        target = change[-1] if (change is list or change is tuple) else change
+        target = change[-1] if isinstance(change, Union[list, tuple]) else change
         return AssertionChange(
             type=self._TYPE_MAPPING.get(type, f'unknown ({type})'),
             changed_property=target.property,

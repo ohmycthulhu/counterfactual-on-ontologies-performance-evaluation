@@ -33,7 +33,7 @@ class AlgorithmTestCase:
             self._individual = None
 
     @property
-    def expected_changes(self):
+    def expected_changes(self) -> list[hash]:
         return self._example['expectedOutcomes'] if 'expectedOutcomes' in self._example else []
 
     def _initialize_individual(self) -> owl.NamedIndividual:
@@ -69,9 +69,18 @@ class AlgorithmTestCase:
 
     @staticmethod
     def _get_or_create_individual(ontology, is_a):
-        cls = AlgorithmTestCase._get_class(ontology, is_a)
-        instances = cls.instances()
-        return instances[0] if cls.instances() else cls(cls.name.lower)
+        cls = [AlgorithmTestCase._get_class(ontology, c) for c in is_a]
+
+        base_cls = cls[0]
+        instances = base_cls.instances()
+
+        for instance in instances:
+            if set(instance.is_a) == set(cls):
+                return instance
+
+        new_individual = base_cls('_'.join([c.name for c in cls]).lower)
+        new_individual.is_a = cls
+        return new_individual
 
 
 class ExamplesManager:

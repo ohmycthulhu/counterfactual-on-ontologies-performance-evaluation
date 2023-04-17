@@ -9,32 +9,6 @@ class AlgorithmAdapter(ABC):
         pass
 
 
-class CounterfactualExplanation:
-    def __init__(self, individual: owl.NamedIndividual, changed_assertions: list[hash], proximity: float, sparcity: int):
-        self._individual = individual
-        self._changed_assertions = changed_assertions
-        self._proximity = proximity
-        self._sparcity = sparcity
-
-    # TODO: Add getters for individual, changed assertions, proximity, and sparcity
-
-    @property
-    def individual(self):
-        return self._individual
-
-    @property
-    def changed_assertions(self):
-        return self._changed_assertions
-
-    @property
-    def sparcity(self):
-        return self._sparcity
-
-    @property
-    def proximity(self):
-        return self._proximity
-
-
 class AssertionChange:
     _INDICATORS = {
         'insert': '+ ',
@@ -64,6 +38,30 @@ class AssertionChange:
 
     def _indicator(self):
         return self._INDICATORS.get(self._type, '? ')
+
+
+class CounterfactualExplanation:
+    def __init__(self, individual: owl.NamedIndividual, changed_assertions: list[AssertionChange], proximity: float, sparcity: int):
+        self._individual = individual
+        self._changed_assertions = changed_assertions
+        self._proximity = proximity
+        self._sparcity = sparcity
+
+    @property
+    def individual(self):
+        return self._individual
+
+    @property
+    def changed_assertions(self):
+        return self._changed_assertions
+
+    @property
+    def sparcity(self):
+        return self._sparcity
+
+    @property
+    def proximity(self):
+        return self._proximity
 
 
 
