@@ -63,6 +63,8 @@ class CounterfactualExplanation:
     def proximity(self):
         return self._proximity
 
+    def __str__(self):
+        return "\n".join([str(change) for change in self._changed_assertions])
 
 
 

@@ -82,6 +82,16 @@ class AlgorithmTestCase:
         new_individual.is_a = cls
         return new_individual
 
+    def __str__(self):
+        return f"{self.__str_assertions__()} => {self._example['desiredClass']}"
+
+    def __str_assertions__(self):
+        return ' and '.join([self.__str_assertion__(assertion) for assertion in self._example['assertions']])
+
+    @staticmethod
+    def __str_assertion__(assertion):
+        return f"({assertion['property']} {assertion['value']})"
+
 
 class ExamplesManager:
     def __init__(self):

@@ -5,13 +5,22 @@ from typing import Union
 
 
 class RankingAnalyzerResultItem:
-    def __init__(self, ranks: list[int], explanations: list[CounterfactualExplanation]):
+    def __init__(self, ranks: list[int], explanations: list[CounterfactualExplanation], test_case):
         self._ranks = ranks
         self._explanations = explanations
+        self._test_case = test_case
 
     def __str__(self):
-        # TODO: Implement
-        pass
+        return f"Example: {self._test_case}\nRanking:\n{self.__str_explanations__()}"
+
+    def __str_explanations__(self):
+        return "\n\n".join([
+            self._str_explanation(explanation, index) for index, explanation in enumerate(self._explanations)
+        ])
+
+    def _str_explanation(self, explanation, index):
+        is_expected = self._ranks.count(index) > 0
+        return f"Explanation #{index + 1} {'(expected)' if is_expected else ''}\n{explanation}"
 
 
 class RankingAnalyzerResult(OutputAnalyzerResult):
@@ -19,12 +28,7 @@ class RankingAnalyzerResult(OutputAnalyzerResult):
         self._items = items
 
     def __str__(self):
-        # TODO: Implement
-        return ''
-
-    def to_log(self):
-        # TODO: Implement
-        return ''
+        return "Ranking analysis:\n" + ('\n' + '*' * 10 + '\n').join([str(x) for x in self._items])
 
 
 class RankingAnalyzer(OutputAnalyzer):
@@ -39,7 +43,8 @@ class RankingAnalyzer(OutputAnalyzer):
     def _analyze_item(self, example: ProgramResult) -> RankingAnalyzerResultItem:
         return RankingAnalyzerResultItem(
             ranks=self._get_ranks(example.result, example.test_case.expected_changes),
-            explanations=example.result
+            explanations=example.result,
+            test_case=example.test_case
         )
 
     def _get_ranks(self, explanations: list[CounterfactualExplanation], expectations: hash) -> list[int]:

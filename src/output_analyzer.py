@@ -7,10 +7,6 @@ class OutputAnalyzerResult(ABC):
     def __str__(self):
         pass
 
-    @abstractmethod
-    def to_log(self):
-        pass
-
 
 class OutputAnalyzer(ABC):
     @abstractmethod
