@@ -1,4 +1,4 @@
-from examples import ExamplesManager
+from examples import ExamplesManager, AlgorithmTestCase
 from adapter import AlgorithmAdapter
 from program_result import ProgramResult
 from output_analyzer import OutputAnalyzer
@@ -28,5 +28,22 @@ class Program:
             for example in self._examples_manager.examples
         ]
 
+    def _run_example(self, example: AlgorithmTestCase):
+        self._run_before_callback(example)
+        algorithm_result = self._algorithm.run(example)
+        self._run_after_callback(example, algorithm_result)
+        example.destroy()
+        return ProgramResult(example, algorithm_result)
+
     def _analyze_results(self, results):
         return [analyzer.analyze(results) for analyzer in self._analyzers]
+
+    def _run_before_callback(self, example: AlgorithmTestCase):
+        for analyzer in self._analyzers:
+            analyzer.before_test_case(example)
+
+    def _run_after_callback(self, example: AlgorithmTestCase, run_result):
+        for analyzer in self._analyzers:
+            analyzer.after_test_case(example, run_result)
+
+

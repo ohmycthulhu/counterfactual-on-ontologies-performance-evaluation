@@ -16,10 +16,11 @@ class AssertionChange:
         'modify': '+-',
     }
 
-    def __init__(self, type, changed_property, value=None):
+    def __init__(self, type, changed_property, value=None, old_value=None):
         self._type = type
         self._changed_property = changed_property
         self._value = value
+        self._old_value = old_value
 
     @property
     def type(self):
@@ -33,11 +34,23 @@ class AssertionChange:
     def value(self):
         return self._value
 
+    @property
+    def old_value(self):
+        return self._value
+
     def __str__(self):
-        return f"{self._indicator()} {self._changed_property}{f' {self._value}' if self._value else ''}"
+        return f"{self._indicator()} {self._changed_property}{self._str_value()}"
 
     def _indicator(self):
         return self._INDICATORS.get(self._type, '? ')
+
+    def _str_value(self):
+        if not self._value:
+            return ''
+        if self._old_value:
+            return f' {self._old_value} => {self._value}'
+        else:
+            return f' {self._value}'
 
 
 class CounterfactualExplanation:
@@ -65,6 +78,4 @@ class CounterfactualExplanation:
 
     def __str__(self):
         return "\n".join([str(change) for change in self._changed_assertions])
-
-
 

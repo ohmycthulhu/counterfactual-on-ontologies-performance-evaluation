@@ -13,12 +13,16 @@ class CEOAdapter(AlgorithmAdapter):
     }
 
     def run(self, example: AlgorithmTestCase):
-        result = generate_counterfactuals(example.ontology, example.individual, example.individual.is_a)
+        counterfactuals = generate_counterfactuals(example.ontology, example.individual, example.individual.is_a)
 
-        return [
+        run_results = [
             self._map_item(individual, info)
-            for individual, info in result.items()
+            for individual, info in counterfactuals.items()
         ]
+
+        example.destroy()
+
+        return run_results
 
     def _map_item(self, individual, info):
         modifications = self._calculate_modifications(info)
@@ -45,11 +49,25 @@ class CEOAdapter(AlgorithmAdapter):
         ]
 
     def _map_modification(self, type, change):
-        target = change[-1] if isinstance(change, Union[list, tuple]) else change
+        target = change
+        old_value, new_value = None, None
+
+        if isinstance(target, Union[list, tuple]):
+            if len(target) >= 2:
+                old_value = target[-2].instance
+                new_value = target[-1].instance
+                target = target[-1]
+            else:
+                target = target[0]
+                new_value = target.instance
+        else:
+            new_value = target.instance
+
         return AssertionChange(
             type=self._TYPE_MAPPING.get(type, f'unknown ({type})'),
             changed_property=target.property,
-            value=target.instance.is_a
+            old_value=old_value.is_a if old_value is not None else None,
+            value=new_value.is_a if new_value is not None else None
         )
 
 

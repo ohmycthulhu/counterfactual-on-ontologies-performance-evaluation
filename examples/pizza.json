@@ -24,7 +24,7 @@
             {
               "type": "modify",
               "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
-              "new_value": [
+              "value": [
                 "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#VegetableTopping"
               ]
             }
@@ -35,7 +35,7 @@
             {
               "type": "modify",
               "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
-              "new_value": [
+              "value": [
                 "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#CheeseTopping"
               ]
             }

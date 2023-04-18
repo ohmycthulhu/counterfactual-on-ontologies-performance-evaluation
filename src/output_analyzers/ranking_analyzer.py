@@ -90,17 +90,17 @@ class RankingAnalyzer(OutputAnalyzer):
                 continue
             if expected_change['property'] != changed_assertion.changed_property.iri:
                 continue
-            if not ('new_value' in expected_change or changed_assertion.value):
+            if not ('value' in expected_change or changed_assertion.value):
                 return expected_change
 
             # Check whether value is iterable
             if isinstance(changed_assertion.value, Union[list, tuple]):
                 # If they are, check them as sets
-                if set(expected_change['new_value']) == set(value.iri for value in changed_assertion.value):
+                if set(expected_change['value']) == set(value.iri for value in changed_assertion.value):
                     return expected_change
             else:
                 # Otherwise, check directly
-                if expected_change['new_value'] == changed_assertion.value.iri:
+                if expected_change['value'] == changed_assertion.value.iri:
                     return expected_change
 
         return None
