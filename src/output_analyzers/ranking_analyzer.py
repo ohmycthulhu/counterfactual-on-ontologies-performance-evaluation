@@ -11,7 +11,7 @@ class RankingAnalyzerResultItem:
         self._test_case = test_case
 
     def __str__(self):
-        return f"Example: {self._test_case}\nRanking:\n{self.__str_explanations__()}"
+        return f"Example ({self._test_case.key}): {self._test_case}\nRanking:\n{self.__str_explanations__()}"
 
     def __str_explanations__(self):
         return "\n\n".join([

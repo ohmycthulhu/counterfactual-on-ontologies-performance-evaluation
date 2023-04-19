@@ -1,6 +1,7 @@
 import copy
 from itertools import product, combinations
 from typing import Union, Callable
+import time
 
 import owlready2 as owl
 import networkx as nx
@@ -595,19 +596,34 @@ def get_modification_list(node_source, node_target):
 
 def generate_counterfactuals(ontology, ontology_individual, wanted_class, display_graph=False,
                              non_actionnable_property: owl.ObjectProperty = None, use_naive=True):
+    checkpoints = {
+        'start': time.time()
+    }
+
     print("create_indiv")
     indiv = create_individual_from_ontology(ontology_individual)
     owl.destroy_entity(ontology_individual)
+    checkpoints['create_indiv'] = time.time()
+
     print("explore and generate")
     graph = explore_and_generate(None, ontology, indiv, wanted_class, non_actionnable_property=non_actionnable_property,
                                  use_naive=use_naive)
+    checkpoints['explore_and_generate'] = time.time()
     print("generate ancestors")
     graph = generate_all_ancestors(graph, ontology, max_iterations=2)
+    checkpoints['generate_ancestors'] = time.time()
+
     print("generate individuals")
     graph = generate_all_individual_descendants(graph, ontology)
+    checkpoints['generate_individuals'] = time.time()
+
     graph = connect_all_nodes(graph)
+    checkpoints['connect_all_nodes'] = time.time()
+
     distance_func = create_compute_distance_function(ontology)
     shortest_paths = nx.single_source_dijkstra(graph, indiv, weight=distance_func)
+    checkpoints['computing_counterfactuals'] = time.time()
+
     counterfactuals = {}
     for target in shortest_paths[0].keys():
         if target.is_consistent:
@@ -641,7 +657,10 @@ def generate_counterfactuals(ontology, ontology_individual, wanted_class, displa
                 nodes_color.append("black")
         nx.draw(graph, edge_color=edges_color, node_color=nodes_color, labels=node_labels)
         plt.show()
-    return counterfactuals
+
+    checkpoints['end'] = time.time()
+
+    return counterfactuals, {'checkpoints': checkpoints}
 
 
 def test_counterfactuals(ontology, individual, wanted_class, display_graph=True,

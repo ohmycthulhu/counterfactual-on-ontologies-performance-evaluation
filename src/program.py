@@ -24,16 +24,16 @@ class Program:
 
     def _run_examples(self):
         return [
-            ProgramResult(example, self._algorithm.run(example))
+            self._run_example(example)
             for example in self._examples_manager.examples
         ]
 
     def _run_example(self, example: AlgorithmTestCase):
         self._run_before_callback(example)
-        algorithm_result = self._algorithm.run(example)
+        algorithm_result, meta = self._algorithm.run(example)
         self._run_after_callback(example, algorithm_result)
         example.destroy()
-        return ProgramResult(example, algorithm_result)
+        return ProgramResult(example, algorithm_result, meta)
 
     def _analyze_results(self, results):
         return [analyzer.analyze(results) for analyzer in self._analyzers]
