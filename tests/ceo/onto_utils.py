@@ -1,7 +1,7 @@
 import owlready2 as owl
 from typing import Union
 from collections.abc import Iterable
-from .custom_reasoning import sync_reasoner_pellet
+from custom_reasoning import sync_reasoner_pellet
 
 
 def load_ontology(path: str) -> owl.namespace.Ontology:

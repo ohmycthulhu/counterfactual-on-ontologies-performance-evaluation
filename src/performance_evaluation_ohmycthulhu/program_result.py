@@ -1,5 +1,5 @@
-from examples import AlgorithmTestCase
-from adapter import CounterfactualExplanation
+from .examples import AlgorithmTestCase
+from .adapter import CounterfactualExplanation
 
 
 class ProgramResult:

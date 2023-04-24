@@ -106,36 +106,14 @@ class ExamplesManager:
 
         return self._examples
 
-    def load(self, path: str):
-        config = self._read_file(path)
-        ontology = self._get_ontology(path, config['ontology'])
-        self._verify_examples(config['examples'])
-        examples = self._load_examples(config['examples'], ontology)
+    def load(self, examples: list[hash], ontology: owl.Ontology):
+        self._verify_examples(examples)
+        examples = self._load_examples(examples, ontology)
 
         self._examples = examples
         self._loaded = True
 
         return self._examples
-
-    def _read_file(self, path: str):
-        with open(path, 'r') as file:
-            data = json.load(file)
-
-        if not ('ontology' in data and 'examples' in data):
-            raise ImportError(f"{path} does not provide required fields: ontology, examples")
-
-        return data
-
-    def _get_ontology(self, file_path: str, path: str):
-        ontology_path = os.path.join(
-            os.path.dirname(file_path),
-            path
-        )
-
-        if ontology_path not in self._ontologies:
-            self._ontologies[ontology_path] = owl.get_ontology(f"file://{ontology_path}").load()
-
-        return self._ontologies[ontology_path]
 
     def _load_examples(self, examples: list[hash], ontology):
         return [AlgorithmTestCase(example, ontology) for example in examples]

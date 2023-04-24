@@ -1,8 +1,8 @@
-from src.adapter import AlgorithmAdapter, CounterfactualExplanation, AssertionChange
-from src.examples import AlgorithmTestCase
-from .graph_generator import generate_counterfactuals
 from typing import Union
 from functools import reduce
+from performance_evaluation_ohmycthulhu.adapter import AlgorithmAdapter, CounterfactualExplanation, AssertionChange
+from performance_evaluation_ohmycthulhu.examples import AlgorithmTestCase
+from graph_generator import generate_counterfactuals
 
 
 class CEOAdapter(AlgorithmAdapter):

@@ -6,7 +6,7 @@ from typing import Union
 
 import owlready2 as owl
 
-from .onto_utils import add_relation_to_indiv, is_consistent
+from onto_utils import add_relation_to_indiv, is_consistent
 
 Primitives = Union[int, bool, float, str]
 

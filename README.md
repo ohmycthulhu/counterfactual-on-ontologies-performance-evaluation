@@ -8,5 +8,5 @@ The metrics specification can be found at [[Metrics.md]] and technical details a
 
 For using profiling in more detailed way, you may use [scalene](https://pypi.org/project/scalene/) by specifying `-m scalene` for interpreter:
 ```commandline
-venv/bin/python -m scalene src/main.py
+venv/bin/python -m scalene ...
 ```

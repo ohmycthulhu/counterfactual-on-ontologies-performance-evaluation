@@ -1,9 +1,8 @@
-from src.output_analyzer import OutputAnalyzer, OutputAnalyzerResult
-from src.program_result import ProgramResult
-from src.adapter import CounterfactualExplanation, AssertionChange
-from src.examples import AlgorithmTestCase
-from typing import Union
 import time
+from typing import Union
+from .output_analyzer import OutputAnalyzer, OutputAnalyzerResult
+from .program_result import ProgramResult
+from .examples import AlgorithmTestCase
 
 
 class PerformanceAnalyzerResultItem:

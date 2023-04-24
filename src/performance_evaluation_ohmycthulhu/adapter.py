@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from examples import AlgorithmTestCase
 import owlready2 as owl
+from .examples import AlgorithmTestCase
 
 
 class AlgorithmAdapter(ABC):

@@ -1,17 +1,18 @@
-from examples import ExamplesManager, AlgorithmTestCase
-from adapter import AlgorithmAdapter
-from program_result import ProgramResult
-from output_analyzer import OutputAnalyzer
+import owlready2 as owl
+from .examples import ExamplesManager, AlgorithmTestCase
+from .adapter import AlgorithmAdapter
+from .program_result import ProgramResult
+from .output_analyzer import OutputAnalyzer
 
 
 class Program:
-    def __init__(self, algorithm: AlgorithmAdapter, analyzers: list[OutputAnalyzer]):
-        self._examples_manager = ExamplesManager()
+    def __init__(self, algorithm: AlgorithmAdapter, analyzers: list[OutputAnalyzer], example_manager: ExamplesManager=None):
+        self._examples_manager = example_manager if example_manager is not None else ExamplesManager()
         self._algorithm = algorithm
         self._analyzers = analyzers
 
-    def run(self, examples_path: str):
-        self._load_examples(examples_path)
+    def run(self, examples: list[hash], ontology: owl.Ontology):
+        self._load_examples(examples, ontology)
 
         results = self._run_examples()
 
@@ -19,8 +20,8 @@ class Program:
 
         return results, analyzes_result
 
-    def _load_examples(self, examples_path):
-        return self._examples_manager.load(examples_path)
+    def _load_examples(self, examples: list[hash], ontology: owl.Ontology):
+        return self._examples_manager.load(examples, ontology)
 
     def _run_examples(self):
         return [

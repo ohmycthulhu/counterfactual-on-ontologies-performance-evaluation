@@ -1,7 +1,7 @@
-from src.output_analyzer import OutputAnalyzer, OutputAnalyzerResult
-from src.program_result import ProgramResult
-from src.adapter import CounterfactualExplanation, AssertionChange
 from typing import Union
+from .output_analyzer import OutputAnalyzer, OutputAnalyzerResult
+from .program_result import ProgramResult
+from .adapter import CounterfactualExplanation, AssertionChange
 
 
 class RankingAnalyzerResultItem:

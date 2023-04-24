@@ -6,8 +6,8 @@ import time
 import owlready2 as owl
 import networkx as nx
 import matplotlib.pyplot as plt
-from .onto_utils import is_subproperty_of, has_one_of, get_class_parents, get_class_individual, get_class_descendants, get_all_descendants
-from .graph import Individual, create_individual_from_ontology, AssertionRemovalOperation, \
+from onto_utils import is_subproperty_of, has_one_of, get_class_parents, get_class_individual, get_class_descendants, get_all_descendants
+from graph import Individual, create_individual_from_ontology, AssertionRemovalOperation, \
     AssertionInsertionOperation, ClassModificationOperation, Operation, choose_assertion_type, Assertion, \
     ObjectAssertion
 

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from examples import AlgorithmTestCase
-from program_result import ProgramResult
+from .examples import AlgorithmTestCase
+from .program_result import ProgramResult
 
 
 class OutputAnalyzerResult(ABC):
