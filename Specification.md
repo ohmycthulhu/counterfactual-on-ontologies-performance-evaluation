@@ -15,18 +15,16 @@ Each change is mapped into a structure that contains the following fields:
 
 ## Interface for example
 
-
-- `ontology` - path to the ontology
-- `examples` - list of available examples
-  - `key` - ID of the example
-  - `desiredClass` - the final class. It may be either `string` or an object with `{name, namespace}`
-  - `assertions` - the existing assertions in the individual
-  - `expectedOutcomes` - an array of expected counterfactuals. If it's empty or not present, the example is unsuitable for quality assurance (testing ranking):
-    - each item contains the following:
-      - `modifications` - array of modifications:
-        - `type` - `insert`, `remove`, `modify`
-        - `property` - iri of the instance's property that has been modified
-        - `value` - new instance's classes' iris, used in `insert` and `modify` types. May be either array or a single value, depending on the property.
+Examples are list of hashes where each item contain the following fields: 
+- `key` - ID of the example
+- `desiredClass` - the final class. It may be either `string` or an object with `{name, namespace}`
+- `assertions` - the existing assertions in the individual
+- `expectedOutcomes` - an optional array of expected counterfactuals. If it's empty or not present, the example is unsuitable for quality assurance (testing ranking):
+  - each item contains the following:
+    - `modifications` - array of modifications:
+      - `type` - `insert`, `remove`, `modify`
+      - `property` - iri of the instance's property that has been modified
+      - `value` - new instance's classes' iris, used in `insert` and `modify` types. May be either array or a single value, depending on the property.
 
 
 ## Interfaces for classes
@@ -35,7 +33,7 @@ Each change is mapped into a structure that contains the following fields:
 Runs the performance evaluation and calculates the results.
 Uses adapter to run the algorithm, examples manager to load and validate examples, analyzers for analyzing the results of test examples.
 Public interface:
-- `run(examples_path)` - runs the whole program and returns the results in form of array of `ProgramResult` class objects
+- `run(examples, ontology)` - runs the whole program and returns the results in form of array of `ProgramResult` class objects
 
 ### `ProgramResult`
 Attribute class that contains following fields:
@@ -56,7 +54,7 @@ Includes lazy loading creating of individuals and means for removing correspondi
 
 ### `ExamplesManager`
 Loads and verifies the examples from the file. It also should be able to utilize ontology in order to get necessary types.
-- `load(path)` - loads a file with examples, maps them to `AlgorithmTestCase`, and verifies their consistency.
+- `load(examples, ontology)` - loads a file with examples, maps them to `AlgorithmTestCase`, and verifies their consistency.
 - `examples` - returns list of test cases or raises error if they weren't loaded yet.
 
 ****

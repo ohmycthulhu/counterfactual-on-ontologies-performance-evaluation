@@ -610,7 +610,7 @@ def generate_counterfactuals(ontology, ontology_individual, wanted_class, displa
                                  use_naive=use_naive)
     checkpoints['explore_and_generate'] = time.time()
     print("generate ancestors")
-    graph = generate_all_ancestors(graph, ontology, max_iterations=2)
+    graph = generate_all_ancestors(graph, ontology)
     checkpoints['generate_ancestors'] = time.time()
 
     print("generate individuals")

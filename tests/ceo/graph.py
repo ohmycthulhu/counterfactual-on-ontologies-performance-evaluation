@@ -156,6 +156,10 @@ class Individual:
         if destroy:
             owl.destroy_entity(new_individual)
         self.is_consistent = consistent
+
+        xxx = [f"{assertion.property} = {assertion.instance}" for assertion in self.assertions]
+        print(f"{' & '.join(xxx)} - {'Consistent' if consistent else 'Non Consistent'}")
+
         if return_inconsistent:
             return consistent, inconsistent_assertions
         else:

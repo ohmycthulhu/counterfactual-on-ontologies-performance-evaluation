@@ -13,7 +13,7 @@ class CEOAdapter(AlgorithmAdapter):
     }
 
     def run(self, example: AlgorithmTestCase):
-        counterfactuals, meta = generate_counterfactuals(example.ontology, example.individual, example.individual.is_a)
+        counterfactuals, meta = generate_counterfactuals(example.ontology, example.individual, example.desired_class)
 
         run_results = [
             self._map_item(individual, info)

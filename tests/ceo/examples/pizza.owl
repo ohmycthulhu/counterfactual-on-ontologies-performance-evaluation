@@ -389,12 +389,6 @@ v1.4. Added Food class (used in domain/range of hasIngredient), Added several ha
         <ObjectProperty IRI="/pizza.owl/pizza.owl#isToppingOf"/>
     </Declaration>
     <Declaration>
-        <NamedIndividual IRI="/pizza.owl#chickenTopping"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="/pizza.owl#thinAndCrispyBase"/>
-    </Declaration>
-    <Declaration>
         <NamedIndividual IRI="/pizza.owl/pizza.owl#America"/>
     </Declaration>
     <Declaration>
@@ -2406,14 +2400,6 @@ v1.4. Added Food class (used in domain/range of hasIngredient), Added several ha
         <Class IRI="/pizza.owl/pizza.owl#SlicedTomatoTopping"/>
         <Class IRI="/pizza.owl/pizza.owl#SundriedTomatoTopping"/>
     </DisjointClasses>
-    <ClassAssertion>
-        <Class IRI="/pizza.owl/pizza.owl#ChickenTopping"/>
-        <NamedIndividual IRI="/pizza.owl#chickenTopping"/>
-    </ClassAssertion>
-    <ClassAssertion>
-        <Class IRI="/pizza.owl/pizza.owl#ThinAndCrispyBase"/>
-        <NamedIndividual IRI="/pizza.owl#thinAndCrispyBase"/>
-    </ClassAssertion>
     <ClassAssertion>
         <Class IRI="/pizza.owl/pizza.owl#Country"/>
         <NamedIndividual IRI="/pizza.owl/pizza.owl#America"/>
