@@ -20,7 +20,7 @@ class RankingAnalyzerResultItem:
 
     def _str_explanation(self, explanation, index):
         is_expected = self._ranks.count(index) > 0
-        return f"Explanation #{index + 1} {'(expected)' if is_expected else ''}\n{explanation}"
+        return f"Explanation #{explanation.proximity} {'(expected)' if is_expected else ''}\n{explanation}"
 
 
 class RankingAnalyzerResult(OutputAnalyzerResult):
@@ -39,6 +39,9 @@ class RankingAnalyzer(OutputAnalyzer):
         return RankingAnalyzerResult(
             [self._analyze_item(example) for example in examples]
         )
+
+    def analyze_example(self, example: ProgramResult) -> OutputAnalyzerResult:
+        return RankingAnalyzerResult([self._analyze_item(example)])
 
     def _analyze_item(self, example: ProgramResult) -> RankingAnalyzerResultItem:
         return RankingAnalyzerResultItem(

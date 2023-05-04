@@ -1,15 +1,17 @@
+from typing import Callable
 import owlready2 as owl
 from .examples import ExamplesManager, AlgorithmTestCase
 from .adapter import AlgorithmAdapter
 from .program_result import ProgramResult
-from .output_analyzer import OutputAnalyzer
+from .output_analyzer import OutputAnalyzer, OutputAnalyzerResult
 
 
 class Program:
-    def __init__(self, algorithm: AlgorithmAdapter, analyzers: list[OutputAnalyzer], example_manager: ExamplesManager=None):
+    def __init__(self, algorithm: AlgorithmAdapter, analyzers: list[OutputAnalyzer], example_manager: ExamplesManager=None, callbacks: Callable[[list[OutputAnalyzerResult]], None] = None):
         self._examples_manager = example_manager if example_manager is not None else ExamplesManager()
         self._algorithm = algorithm
         self._analyzers = analyzers
+        self._callbacks = callbacks if callbacks is not None else []
 
     def run(self, examples: list[hash], ontology: owl.Ontology):
         self._load_examples(examples, ontology)
@@ -30,11 +32,20 @@ class Program:
         ]
 
     def _run_example(self, example: AlgorithmTestCase):
+        print(f"Running {example}")
         self._run_before_callback(example)
         algorithm_result, meta = self._algorithm.run(example)
         self._run_after_callback(example, algorithm_result)
         example.destroy()
-        return ProgramResult(example, algorithm_result, meta)
+        result = ProgramResult(example, algorithm_result, meta)
+        self._invoke_callbacks(result)
+
+        return result
+
+    def _invoke_callbacks(self, result: ProgramResult):
+        analysis = [analyzer.analyze_example(result) for analyzer in self._analyzers]
+        for callback in self._callbacks:
+            callback(analysis)
 
     def _analyze_results(self, results):
         return [analyzer.analyze(results) for analyzer in self._analyzers]

@@ -18,6 +18,10 @@ class OutputAnalyzer(ABC):
     def analyze(self, examples: list[ProgramResult]) -> OutputAnalyzerResult:
         pass
 
+    @abstractmethod
+    def analyze_example(self, example: ProgramResult) -> OutputAnalyzerResult:
+        pass
+
     def before_test_case(self, test_case: AlgorithmTestCase):
         pass
 

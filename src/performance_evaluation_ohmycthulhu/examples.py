@@ -106,7 +106,7 @@ class AlgorithmTestCase:
         return new_individual, True
 
     def __str__(self):
-        return f"{self.__str_assertions__()} => {self._example['desiredClass']}"
+        return f"{self.key}: {self.__str_assertions__()} => {self._example['desiredClass']}"
 
     def __str_assertions__(self):
         return ' and '.join([self.__str_assertion__(assertion) for assertion in self._example['assertions']])

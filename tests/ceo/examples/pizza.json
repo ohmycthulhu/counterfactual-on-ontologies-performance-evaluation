@@ -1,6 +1,48 @@
 [
   {
-    "key": "vegetarian",
+    "key": "vegetarian-1",
+    "desiredClass": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#VegetarianPizza",
+    "assertions": [
+      {
+        "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
+        "value": [
+          "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#ChickenTopping"
+        ]
+      },
+      {
+        "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasBase",
+        "value": [
+          "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#ThinAndCrispyBase"
+        ]
+      }
+    ],
+    "expectedOutcomes": [
+      {
+        "modifications": [
+          {
+            "type": "modify",
+            "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
+            "value": [
+              "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#VegetableTopping"
+            ]
+          }
+        ]
+      },
+      {
+        "modifications": [
+          {
+            "type": "modify",
+            "property": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#hasTopping",
+            "value": [
+              "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#CheeseTopping"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "vegetarian-2",
     "desiredClass": "http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#VegetarianPizza",
     "assertions": [
       {

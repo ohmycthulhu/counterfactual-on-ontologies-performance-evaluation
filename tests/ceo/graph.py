@@ -6,16 +6,16 @@ from typing import Union
 
 import owlready2 as owl
 
-from onto_utils import add_relation_to_indiv, is_consistent
+import onto_utils
 
 Primitives = Union[int, bool, float, str]
-
 
 class Assertion(ABC):
 
     def __init__(self, property, instance):
         self.property = property
         self.instance = instance
+        # self.indiv_instance = create_individual_from_ontology(self.instance)
 
     @abstractmethod
     def get_property_name(self):
@@ -32,11 +32,12 @@ class Assertion(ABC):
     def __str__(self):
         return f"({self.get_property_name()} {self.get_instance_name()} is a {self.get_instance_type()})"
 
-    def __hash__(self):
-        return hash((self.property, self.instance))
-
     def __eq__(self, other):
-        return other is not None and self.property == other.property and self.instance == other.instance
+        return other is not None and self.property == other.property and self.instance.is_a == other.instance.is_a \
+               and self.instance.iri == other.instance.iri and self.instance.name == other.instance.name
+
+    def __hash__(self):
+        return hash((self.property, self.instance.name, tuple(self.instance.is_a), self.instance.iri))
 
 
 class ObjectAssertion(Assertion):
@@ -52,9 +53,11 @@ class ObjectAssertion(Assertion):
     def get_instance_type(self):
         return self.instance.is_a
 
+    def __str__(self):
+        return f"{self.property} -> {self.instance}"
+
     def __deepcopy__(self, memodict={}):
         return ObjectAssertion(self.property, self.instance)
-
 
 class DataAssertion(Assertion):
 
@@ -124,7 +127,7 @@ class Individual:
         return hash((tuple(sorted_assertions(self.assertions)), tuple(self.is_a), len(self.assertions)))
 
     def __eq__(self, other):
-        return other is not None and set(self.assertions) == set(other.assertions) \
+        return other is not None and tuple(sorted_assertions(self.assertions)) == tuple(sorted_assertions(other.assertions)) \
                and set(self.is_a) == set(other.is_a) \
                and len(self.assertions) == len(other.assertions)
 
@@ -140,33 +143,40 @@ class Individual:
         self.is_a = is_a
         self.is_consistent = None
 
-    def check_consistency(self, ontology, name="consistencyCheck", destroy=True, return_inconsistent=False):
+    def check_consistency(self, ontology, name="consistencyCheck", destroy=True, return_inconsistent=False, after_check=0):
         if self.is_consistent is not None:
             return self.is_consistent
         default_class = list(ontology.classes())[0]
         new_individual = default_class(name)
         new_individual.is_a = self.is_a
         for assertion in self.assertions:
-            add_relation_to_indiv(new_individual, assertion.property, assertion.instance)
+            if assertion.instance not in list(ontology.individuals()):
+                assertion.instance = onto_utils.get_class_individual(assertion.instance.is_a[0])
+            onto_utils.add_relation_to_indiv(new_individual, assertion.property, assertion.instance)
         if return_inconsistent:
-            consistent, explanations = is_consistent(ontology, return_explanations=return_inconsistent)
+            consistent, explanations = onto_utils.is_consistent(ontology, return_explanations=return_inconsistent)
             inconsistent_assertions = self._extract_inconsistent_assertion(explanations, name)
         else:
-            consistent = is_consistent(ontology)
+            consistent = onto_utils.is_consistent(ontology)
+        # ontology.save("test.owl")
         if destroy:
             owl.destroy_entity(new_individual)
+
+        if not consistent and after_check > 0 and not onto_utils.is_consistent(ontology):
+            print(f"Ontology is inconsistent even without individual {[str(a) for a in self.assertions]}")
+
+            if after_check > 1:
+                raise Exception(f"Ontology is inconsistent even without individual {[str(a) for a in self.assertions]}")
+
         self.is_consistent = consistent
-
-        xxx = [f"{assertion.property} = {assertion.instance}" for assertion in self.assertions]
-        print(f"{' & '.join(xxx)} - {'Consistent' if consistent else 'Non Consistent'}")
-
         if return_inconsistent:
             return consistent, inconsistent_assertions
         else:
             return consistent
 
     def __deepcopy__(self, memodict={}):
-        return Individual(copy.deepcopy(self.assertions, memodict), [*self.is_a], None)
+        return Individual(copy.deepcopy(self.assertions, memodict), copy.deepcopy(self.is_a, memodict),
+                          None)
 
     def _extract_inconsistent_assertion(self, explanation, name):
         explanations = explanation.splitlines()

@@ -51,6 +51,9 @@ class PerformanceAnalyzer(OutputAnalyzer):
             [self._analyze_item(example) for example in examples]
         )
 
+    def analyze_example(self, example: ProgramResult) -> OutputAnalyzerResult:
+        return PerformanceAnalyzerResult([self._analyze_item(example)])
+
     def _analyze_item(self, example: ProgramResult) -> PerformanceAnalyzerResultItem:
         timer = self._timers[example.test_case.key]
 

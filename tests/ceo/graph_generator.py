@@ -3,10 +3,11 @@ from itertools import product, combinations
 from typing import Union, Callable
 import time
 
+from tqdm import tqdm
 import owlready2 as owl
 import networkx as nx
 import matplotlib.pyplot as plt
-from onto_utils import is_subproperty_of, has_one_of, get_class_parents, get_class_individual, get_class_descendants, get_all_descendants
+import onto_utils as utils
 from graph import Individual, create_individual_from_ontology, AssertionRemovalOperation, \
     AssertionInsertionOperation, ClassModificationOperation, Operation, choose_assertion_type, Assertion, \
     ObjectAssertion
@@ -21,6 +22,19 @@ def check_list_intersection(list_1: list, list_2: list) -> bool:
     :return: True when the two lists share an element, false otherwise
     """
     return not set(list_1).isdisjoint(list_2)
+
+
+def get_indiv_lists_differences(list_1: list[owl.owl_named_individual], list_2: list[owl.owl_named_individual]) -> list[
+    owl.owl_named_individual]:
+    l_1_copy, l_2_copy = copy.copy(list_1), copy.copy(list_2)
+    for element in list_1:
+        for e in l_2_copy:
+            if utils.indiv_eq(element, e):
+                l_1_copy.remove(element)
+                l_2_copy.remove(e)
+                break
+
+    return l_1_copy + l_2_copy
 
 
 def compute_neighbors_remove_assertion(graph: nx.DiGraph, source_individual: Individual,
@@ -40,7 +54,7 @@ def compute_neighbors_remove_assertion(graph: nx.DiGraph, source_individual: Ind
     # Iteratively remove an assertion from the source_individual to create a neighbor
     for assertion_to_remove in source_assertions:
         # If property is not actionnable, skip it.
-        if is_subproperty_of(assertion_to_remove.property, non_actionnable_property):
+        if utils.is_subproperty_of(assertion_to_remove.property, non_actionnable_property):
             continue
 
         individual = remove_assertion_from_indiv(source_individual, assertion_to_remove)
@@ -122,12 +136,12 @@ def explore_and_generate(graph: Union[None, nx.DiGraph], ontology: owl.Ontology,
         # When an inconsistency is detected, remove the responsible assertion(s)
         for assertion in inconsistent_assertions:
             # If property is not actionnable, skip it.
-            if is_subproperty_of(assertion.property, non_actionnable_property):
+            if utils.is_subproperty_of(assertion.property, non_actionnable_property):
                 continue
             # If the assertion to remove has an instance of a class that is defined by a OneOf, check the other
             # instances of the OneOf for any consistency. If a consistent instance found, stop here.
             if isinstance(assertion, ObjectAssertion):
-                one_ofs = has_one_of(assertion.get_instance_type())
+                one_ofs = utils.has_one_of(assertion.get_instance_type())
                 graph, any_consistent = generate_one_ofs(graph, source_individual, assertion, one_ofs, ontology)
                 if any_consistent:
                     return graph
@@ -206,7 +220,7 @@ def generate_ancestors(graph: nx.DiGraph, ontology: owl.Ontology, individual: In
     individual_predecessors = graph.predecessors(individual)
     for predecessor in individual_predecessors:
         operation = graph.edges[predecessor, individual]["operation"]
-        if not isinstance(operation, AssertionRemovalOperation):
+        if not isinstance(operation, AssertionRemovalOperation) or predecessor.is_consistent:
             continue
 
         # Searching for consistent ancestors of the removed assertion's instance
@@ -219,16 +233,16 @@ def generate_ancestors(graph: nx.DiGraph, ontology: owl.Ontology, individual: In
         # If the assertion to remove has an instance of a class that is defined by a OneOf, check the other
         # instances of the OneOf for any consistency.
         if assertion_type == ObjectAssertion:
-            one_ofs = has_one_of(removed_assertion.get_instance_type())
+            one_ofs = utils.has_one_of(removed_assertion.get_instance_type())
             graph, any_consistent = generate_one_ofs(graph, predecessor, removed_assertion, one_ofs, ontology)
             consistent = any_consistent
 
         while not consistent and not check_list_intersection(property_range, ancestors):
             # while not consistent and the property range is not reached.
-            ancestors = get_class_parents(ancestors)
+            ancestors = utils.get_class_parents(ancestors)
             # Modify the instance's class with one of the ancestor and add the new individual in the graph.
             for ancestor in ancestors:
-                ancestor_instance = get_class_individual(ancestor)
+                ancestor_instance = utils.get_class_individual(ancestor)
                 ancestor_individual = copy.deepcopy(individual)
                 new_assertion = assertion_type(removed_assertion.property, ancestor_instance)
                 ancestor_individual.add_assertion(new_assertion)
@@ -239,6 +253,8 @@ def generate_ancestors(graph: nx.DiGraph, ontology: owl.Ontology, individual: In
                 if is_ancestor_consistent:
                     # if one is True in for loop, it must remain True for the rest of the loop
                     consistent = True
+
+                utils.clean_up_individuals()
     return graph
 
 
@@ -256,9 +272,10 @@ def generate_all_ancestors(graph: nx.DiGraph, ontology: owl.Ontology, max_iterat
     n_nodes = 0
     i = 0
     while len(nodes) > n_nodes:
-        for node in nodes:
+        for node in tqdm(nodes, desc="Ancestors"):
             graph = generate_ancestors(graph, ontology, node)
         graph = connect_all_nodes(graph)
+        # show_graph(graph, nodes[0])
         n_nodes = len(nodes)
         nodes = list(graph.nodes)
         i += 1
@@ -285,11 +302,11 @@ def generate_individual_descendants(graph: nx.DiGraph, ontology: owl.Ontology,
     for assertion in assertions:
         instance_class = assertion.instance.is_a
         for cls in instance_class:
-            direct_descendants = get_class_descendants(ontology, cls)
+            direct_descendants = utils.get_class_descendants(ontology, cls)
             for descendant in direct_descendants:
                 # Create a new individual with the modified assertion, by copying the current one and modifying the
                 # desired assertion with a new instance of the wanted class.
-                descendant_instance = get_class_individual(descendant)
+                descendant_instance = utils.get_class_individual(descendant)
                 descendant_indiv = copy.deepcopy(individual)
                 descendant_indiv.change_assertion_instance(assertion, descendant_instance)
                 # assertion_to_modify_index = descendant_indiv.assertions.index(assertion)
@@ -299,13 +316,15 @@ def generate_individual_descendants(graph: nx.DiGraph, ontology: owl.Ontology,
                     graph.add_node(descendant_indiv)
                     operation = ClassModificationOperation(assertion.instance, descendant_instance, assertion.property)
                     graph.add_edge(individual, descendant_indiv, operation=operation)
-                if not only_consistent or descendant_indiv.is_consistent:
-                    graph = generate_individual_descendants(graph, ontology, descendant_indiv)
+                # if not only_consistent or descendant_indiv.is_consistent:
+                # graph = generate_individual_descendants(graph, ontology, descendant_indiv)
+
+                utils.clean_up_individuals()
     return graph
 
 
 def generate_all_individual_descendants(graph: nx.DiGraph, ontology: owl.Ontology,
-                                        only_consistent: bool = True) -> nx.DiGraph:
+                                        only_consistent: bool = True, n_iter: int = 3) -> nx.DiGraph:
     """
     Generate the descendants of every node in the graph.
 
@@ -315,9 +334,10 @@ def generate_all_individual_descendants(graph: nx.DiGraph, ontology: owl.Ontolog
     :return: A graph with every descendant of every node.
     """
     # graph.nodes is modified when adding new nodes so we store the preexisting nodes
-    nodes = list(graph.nodes)
-    for node in nodes:
-        graph = generate_individual_descendants(graph, ontology, node, only_consistent=only_consistent)
+    for i in tqdm(range(1, n_iter+1), desc="Iter descendants"):
+        nodes = list(graph.nodes)
+        for node in tqdm(nodes, desc="Descendants"):
+            graph = generate_individual_descendants(graph, ontology, node, only_consistent=only_consistent)
     return graph
 
 
@@ -374,7 +394,10 @@ def get_node_link(node_source: Individual, node_target: Individual) -> Union[Non
     different_properties = []
     for property in properties_intersection:
         # Find the differences in the instances of every shared property.
-        if sorted(source_assertions_dict[property], key=lambda x: x.name) != sorted(target_assertions_dict[property], key=lambda x: x.name):
+
+        # if sorted(source_assertions_dict[property], key=lambda x: x.name) != sorted(target_assertions_dict[property],
+        #                                                                            key=lambda x: x.name):
+        if get_indiv_lists_differences(source_assertions_dict[property], target_assertions_dict[property]):
             different_properties.append(property)
         if len(different_properties) + len(properties_difference) > 1:
             # If more than one property has different instances, or if one property isn't shared and a shared property
@@ -387,17 +410,17 @@ def get_node_link(node_source: Individual, node_target: Individual) -> Union[Non
         # Get the list of instances of the property for both nodes and find the differences
         source_prop_instances = sorted(source_assertions_dict[different_properties[0]], key=lambda x: x.name)
         target_prop_instances = sorted(target_assertions_dict[different_properties[0]], key=lambda x: x.name)
-        instance_differences = []
-        for x, y in zip(source_prop_instances, target_prop_instances):
-            if x != y:
-                instance_differences += [x, y]
+        instance_differences = get_indiv_lists_differences(source_prop_instances, target_prop_instances)
+        # for x, y in zip(source_prop_instances, target_prop_instances):
+        #    if x != y:
+        #        instance_differences += [x, y]
         # instance_differences = set(source_prop_instances) ^ set(target_prop_instances)
         if len(source_prop_instances) != len(target_prop_instances):
             # If there is not the same number of instances between two nodes, at least one operation is required
-            if len(source_prop_instances) > len(target_prop_instances):
-                instance_differences += source_prop_instances[len(target_prop_instances):]
-            else:
-                instance_differences += target_prop_instances[len(source_prop_instances):]
+            # if len(source_prop_instances) > len(target_prop_instances):
+            #     instance_differences += source_prop_instances[len(target_prop_instances):]
+            # else:
+            #     instance_differences += target_prop_instances[len(source_prop_instances):]
             if len(instance_differences) > 1:
                 # If there is more than one different instances, then more than two operations required, not connected
                 return None
@@ -518,7 +541,7 @@ def compute_assertion_removal_distance(operation, graphed_ontology_distances):
     # Distance for removing an assertion is greater than the maximum path for modifying the same assertion
     assertion = operation.removed_assertion
     property_range = assertion.property.range
-    descendants = get_all_descendants(property_range)
+    descendants = utils.get_all_descendants(property_range)
     possible_pairs = list(combinations(descendants, 2))
     pair_distances = [graphed_ontology_distances[src][target] for src, target in possible_pairs]
     if not pair_distances:
@@ -558,8 +581,8 @@ def ontology2graph(ontology):
     graph.add_nodes_from(classes)
     graph.add_node(owl.Thing)
     for node in graph.nodes:
-        descendants = get_class_descendants(ontology, node)
-        ancestors = get_class_parents(node)
+        descendants = utils.get_class_descendants(ontology, node)
+        ancestors = utils.get_class_parents(node)
         linked_classes = descendants.union(ancestors)
         edges = [(node, cls) for cls in linked_classes]
         graph.add_edges_from(edges)
@@ -609,20 +632,30 @@ def generate_counterfactuals(ontology, ontology_individual, wanted_class, displa
     graph = explore_and_generate(None, ontology, indiv, wanted_class, non_actionnable_property=non_actionnable_property,
                                  use_naive=use_naive)
     checkpoints['explore_and_generate'] = time.time()
+    # show_graph(graph, indiv)
     print("generate ancestors")
-    graph = generate_all_ancestors(graph, ontology)
+    graph = generate_all_ancestors(graph, ontology, max_iterations=len(indiv.assertions))
     checkpoints['generate_ancestors'] = time.time()
-
+    # show_graph(graph, indiv)
     print("generate individuals")
-    graph = generate_all_individual_descendants(graph, ontology)
+    graph = generate_all_individual_descendants(graph, ontology, n_iter=5)
+    # show_graph(graph, indiv)
     checkpoints['generate_individuals'] = time.time()
 
+    print("connect nodes")
     graph = connect_all_nodes(graph)
     checkpoints['connect_all_nodes'] = time.time()
 
+    n_consistent = 0
+    for node in graph.nodes:
+        if node.is_consistent:
+            n_consistent += 1
+    print(f"{len(graph.nodes)} nodes generated, {n_consistent} valid CFs.")
     distance_func = create_compute_distance_function(ontology)
     shortest_paths = nx.single_source_dijkstra(graph, indiv, weight=distance_func)
     checkpoints['computing_counterfactuals'] = time.time()
+
+    explored_individuals = {"total": len(graph.nodes), "consistent": n_consistent}
 
     counterfactuals = {}
     for target in shortest_paths[0].keys():
@@ -657,20 +690,94 @@ def generate_counterfactuals(ontology, ontology_individual, wanted_class, displa
                 nodes_color.append("black")
         nx.draw(graph, edge_color=edges_color, node_color=nodes_color, labels=node_labels)
         plt.show()
+    return counterfactuals, {'checkpoints': checkpoints, "explored_individuals": explored_individuals}
 
-    checkpoints['end'] = time.time()
 
-    return counterfactuals, {'checkpoints': checkpoints}
+def save_graph(graph, indiv, name=".pdf"):
+    edges_color = []
+    operations = nx.get_edge_attributes(graph, "operation").values()
+    for operation in operations:
+        if isinstance(operation, AssertionRemovalOperation):
+            edges_color.append("red")
+        elif isinstance(operation, AssertionInsertionOperation):
+            edges_color.append("green")
+        elif isinstance(operation, ClassModificationOperation):
+            edges_color.append("blue")
+        else:
+            edges_color.append("blue")
+    nodes_color = []
+    node_labels = {node: str(node) for node in graph.nodes}
+    for node in graph.nodes:
+        if node == indiv and not node.is_consistent:
+            nodes_color.append("orange")
+        elif node.is_consistent is None:
+            nodes_color.append("blue")
+        elif node.is_consistent:
+            nodes_color.append("green")
+        elif not node.is_consistent:
+            nodes_color.append("red")
+        else:
+            nodes_color.append("black")
+    nx.draw(graph, edge_color=edges_color, node_color=nodes_color, labels=node_labels)
+    plt.savefig(name)
+
+
+def show_graph(graph, indiv):
+    edges_color = []
+    operations = nx.get_edge_attributes(graph, "operation").values()
+    for operation in operations:
+        if isinstance(operation, AssertionRemovalOperation):
+            edges_color.append("red")
+        elif isinstance(operation, AssertionInsertionOperation):
+            edges_color.append("green")
+        elif isinstance(operation, ClassModificationOperation):
+            edges_color.append("blue")
+        else:
+            edges_color.append("blue")
+    nodes_color = []
+    node_labels = {node: str(node) for node in graph.nodes}
+    for node in graph.nodes:
+        if node == indiv and not node.is_consistent:
+            nodes_color.append("orange")
+        elif node.is_consistent is None:
+            nodes_color.append("blue")
+        elif node.is_consistent:
+            nodes_color.append("green")
+        elif not node.is_consistent:
+            nodes_color.append("red")
+        else:
+            nodes_color.append("black")
+    nx.draw(graph, edge_color=edges_color, node_color=nodes_color, labels=node_labels)
+    plt.show()
 
 
 def test_counterfactuals(ontology, individual, wanted_class, display_graph=True,
-                         non_actionnable_property: owl.ObjectProperty = None, use_naive=True):
-    counterfactuals = generate_counterfactuals(ontology, individual, wanted_class, display_graph=display_graph,
-                                               non_actionnable_property=non_actionnable_property, use_naive=use_naive)
+                         non_actionnable_property: owl.ObjectProperty = None, use_naive=False):
+    counterfactuals, _ = generate_counterfactuals(ontology, individual, wanted_class, display_graph=display_graph,
+                                                  non_actionnable_property=non_actionnable_property,
+                                                  use_naive=use_naive)
     i = 1
     for indiv, info in counterfactuals.items():
         print(i)
         print(indiv)
         print(f"Distance = {info['distance']}")
+        modifs = info["modifications"]
+        # for modif_type, modified_assertions in modifs.items():
+        #     if modif_type == "modified":
+        #         print(f"{modif_type}: {[(str(assertion[0]), str(assertion[1])) for assertion in modified_assertions]}")
+        #     else:
+        #         print(f"{modif_type}: {[str(assertion) for assertion in modified_assertions]}")
         print()
         i += 1
+
+
+if __name__ == '__main__':
+    onto_instruments = utils.load_ontology(".\\performance-evaluation\\examples\\pizza.owl")
+    onto_namespace = onto_instruments.get_namespace("http://www.co-ode.org/ontologies/pizza/pizza.owl/pizza.owl#")
+    print(onto_namespace.pizza)
+    # p = list(onto_instruments.individuals())[-1]
+    # print(p.namespace)
+    # print(list(onto_instruments.classes()))
+    test_counterfactuals(onto_instruments, onto_namespace.pizza, [onto_namespace.VegetarianPizza],
+                         use_naive=True, display_graph=True)
+# test_counterfactuals(onto_wine, onto_wine.test, [onto_wine.OysterShellfishCourse], use_naive=True, display_graph=False)

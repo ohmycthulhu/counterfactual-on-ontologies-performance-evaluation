@@ -210,6 +210,18 @@ def get_object_property_by_name(ontology: owl.namespace.Ontology, object_propert
     return object_properties_name_dict[object_property_name]
 
 
+CREATED_INDIVIDUALS = []
+
+
+def clean_up_individuals():
+    global CREATED_INDIVIDUALS
+
+    for i in CREATED_INDIVIDUALS:
+        owl.destroy_entity(i)
+
+    CREATED_INDIVIDUALS.clear()
+
+
 def get_class_individual(cls: owl.entity.ThingClass):
     """
     Finds one instance of a given class. If no instance exists, creates one.
@@ -221,12 +233,12 @@ def get_class_individual(cls: owl.entity.ThingClass):
     for instance in instances:
         if instance.is_a == [cls]:
             return instance
-    indiv_name = cls.name.lower()
-    indiv = cls(indiv_name)
-    return indiv
+
+    return create_class_individual(cls)
 
 
 def create_class_individual(cls: owl.entity.EntityClass):
+    global CREATED_INDIVIDUALS
     """
     Creates an instance of a given class.
     :param cls: The class to create an instance of
@@ -235,6 +247,7 @@ def create_class_individual(cls: owl.entity.EntityClass):
 
     indiv_name = cls.name.lower()
     indiv = cls(indiv_name)
+    CREATED_INDIVIDUALS.append(indiv)
     return indiv
 
 
@@ -254,7 +267,7 @@ def add_relation_to_indiv(indiv, object_property: owl.prop.ObjectPropertyClass, 
     else:
         indiv.__getattr__(object_property.name).append(object_instance)
     # try:
-    #     indiv.__getattr__(object_property<.name).append(object_instance)
+    #     indiv.__getattr__(object_property.name).append(object_instance)
     # except AttributeError:
     #     setattr(indiv, object_property.name, object_instance)
 
@@ -377,7 +390,7 @@ def get_all_descendants(classes: Union[Iterable[owl.entity.ThingClass], owl.enti
         classes = [classes]
     s = set()
     for cls in classes:
-        s.update(cls.descendants())
+        s.update([descendant for descendant in cls.descendants() if descendant != owl.Nothing])
     return s
 
 
@@ -446,3 +459,7 @@ def is_subproperty_of(child_property: owl.ObjectProperty, parent_property: owl.O
     :return: True if child_property is subproperty of parent_property, False otherwise
     """
     return parent_property in child_property.is_a
+
+
+def indiv_eq(indiv1: owl.owl_named_individual, indiv2: owl.owl_named_individual) -> bool:
+    return indiv1.iri == indiv2.iri and indiv1.is_a == indiv2.is_a
