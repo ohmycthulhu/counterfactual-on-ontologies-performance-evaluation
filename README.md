@@ -10,3 +10,8 @@ For using profiling in more detailed way, you may use [scalene](https://pypi.org
 ```commandline
 venv/bin/python -m scalene ...
 ```
+
+
+
+[![DOI](https://zenodo.org/badge/627450369.svg)](https://zenodo.org/badge/latestdoi/627450369)
+
